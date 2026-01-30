@@ -1,0 +1,51 @@
+const p1 = new Promise((resolve, reject) => {
+  setTimeout(() => {
+    resolve("test-1111");
+  }, 800);
+});
+
+const p2 = new Promise((resolve, reject) => {
+  setTimeout(() => {
+    resolve("test-2222");
+  }, 2000);
+});
+
+const p3 = new Promise((resolve, reject) => {
+  setTimeout(() => {
+    resolve("test-3333");
+  }, 1200);
+});
+
+function AsyncIml(genFn) {
+  return () => {
+    const gen = genFn();
+    const deepValues = (item) => {
+      if (!item.done) {
+        return Promise.resolve(item.value)
+        .then(
+          // 将结果传入next
+          (res) => deepValues(gen.next(res)),
+          //将错误抛入Generator
+          (err) => deepValues(gen.throw(err))
+        );
+      }
+      return Promise.resolve(item.value);
+    };
+    return deepValues(gen.next());
+  };
+}
+
+const res = AsyncIml(function* () {
+  const res1 = yield p1;
+  console.log("res1", res1); 
+  const res2 = yield p2;
+  console.log("res2", res2);
+  const res3 = yield p3;
+  console.log("res3", res3);
+  return res3
+});
+res().then(res => {
+    console.log('then', res)
+}).catch((err) => {
+    console.log('err', err)
+})
